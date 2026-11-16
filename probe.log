@@ -1,0 +1,109 @@
+lid: closed
+-- read-back of every LED id (state / effect / brightness) --
+  led 0x00: state=err05 effect=err05 brightness=err05
+  led 0x01: state=err05 effect=err05 brightness=err05
+  led 0x02: state=err05 effect=err05 brightness=err05
+  led 0x03: state=err05 effect=err05 brightness=err05
+  led 0x04: state=01 effect=00 brightness=ff
+  led 0x05: state=01 effect=err05 brightness=ff
+  led 0x06: state=err05 effect=err05 brightness=err05
+  led 0x07: state=err05 effect=err05 brightness=err05
+  led 0x08: state=err05 effect=err05 brightness=err05
+  led 0x09: state=err05 effect=err05 brightness=err05
+  led 0x0a: state=err05 effect=err05 brightness=err05
+  led 0x0b: state=err05 effect=err05 brightness=err05
+  led 0x0c: state=err05 effect=err05 brightness=err05
+  led 0x0d: state=err05 effect=err05 brightness=err05
+  led 0x0e: state=err05 effect=err05 brightness=err05
+  led 0x0f: state=err05 effect=err05 brightness=err05
+  led 0x10: state=err05 effect=err05 brightness=err05
+  led 0x11: state=err05 effect=err05 brightness=err05
+  led 0x12: state=err05 effect=err05 brightness=err05
+  led 0x13: state=err05 effect=err05 brightness=err05
+  led 0x14: state=err05 effect=err05 brightness=err05
+  led 0x15: state=err05 effect=err05 brightness=err05
+  led 0x16: state=err05 effect=err05 brightness=err05
+  led 0x17: state=err05 effect=err05 brightness=err05
+  led 0x18: state=err05 effect=err05 brightness=err05
+  led 0x19: state=err05 effect=err05 brightness=err05
+  led 0x1a: state=err05 effect=err05 brightness=err05
+  led 0x1b: state=err05 effect=err05 brightness=err05
+  led 0x1c: state=err05 effect=err05 brightness=err05
+  led 0x1d: state=err05 effect=err05 brightness=err05
+  led 0x1e: state=err05 effect=err05 brightness=err05
+  led 0x1f: state=err05 effect=err05 brightness=err05
+  led 0x20: state=err05 effect=err05 brightness=err05
+  device mode: status 02 mode 00 00
+Q: Is the breathing light the Razer logo on the lid? (n = some other LED, e.g. front edge / power) -> n
+
+== Test 1: logo OFF ==
+  logo state off (vs1)               03/00 010400 -> status 02 args 010400000000
+  logo state off (vs0)               03/00 000400 -> status 02 args 000400000000
+Q: Did the breathing light go fully OFF and stay off (watch ~5s)? -> n
+
+== Test 2: logo ON + static ==
+  logo state on (vs1)                03/00 010401 -> status 02 args 010401000000
+  logo effect static (vs1)           03/02 010400 -> status 02 args 010400000000
+  logo brightness max (vs1)          03/03 0104ff -> status 02 args 0104ff000000
+  logo state on (vs0)                03/00 000401 -> status 02 args 000401000000
+  logo effect static (vs0)           03/02 000400 -> status 02 args 000400000000
+  logo brightness max (vs0)          03/03 0004ff -> status 02 args 0004ff000000
+Q: Is the light now solid (NOT breathing)? -> n
+
+== Test 3: driver mode (firmware stops running its own effects) ==
+  device mode = driver               00/04 0300 -> status 02 args 030000000000
+  logo state on (vs1)                03/00 010401 -> status 02 args 010401000000
+  logo effect static (vs1)           03/02 010400 -> status 02 args 010400000000
+  logo brightness max (vs1)          03/03 0104ff -> status 02 args 0104ff000000
+  logo state on (vs0)                03/00 000401 -> status 02 args 000401000000
+  logo effect static (vs0)           03/02 000400 -> status 02 args 000400000000
+  logo brightness max (vs0)          03/03 0004ff -> status 02 args 0004ff000000
+Q: Is the light now solid (NOT breathing)? -> n
+  device mode = normal (revert)      00/04 0000 -> status 02 args 000000000000
+
+== Test 4: static effect on every other LED id ==
+  sent state-on + effect-static to led 0x00-0x20 (except 4,5)
+Q: Is the light now solid (NOT breathing)? -> n
+
+== Test 5: does the logo react to effects at all? (blink effect) ==
+  logo effect blinking               03/02 010401 -> status 05 args 010401000000
+Q: Did the light change to fast blinking? -> n
+  logo effect static                 03/02 010400 -> status 02 args 010400000000
+
+RESULT: nothing over USB HID affected it (is_logo=False) -> EC-controlled
+-- read-back of every LED id (state / effect / brightness) --
+  led 0x00: state=err05 effect=err05 brightness=err05
+  led 0x01: state=err05 effect=err05 brightness=err05
+  led 0x02: state=err05 effect=err05 brightness=err05
+  led 0x03: state=err05 effect=err05 brightness=err05
+  led 0x04: state=01 effect=00 brightness=ff
+  led 0x05: state=01 effect=err05 brightness=ff
+  led 0x06: state=err05 effect=err05 brightness=err05
+  led 0x07: state=err05 effect=err05 brightness=err05
+  led 0x08: state=err05 effect=err05 brightness=err05
+  led 0x09: state=err05 effect=err05 brightness=err05
+  led 0x0a: state=err05 effect=err05 brightness=err05
+  led 0x0b: state=err05 effect=err05 brightness=err05
+  led 0x0c: state=err05 effect=err05 brightness=err05
+  led 0x0d: state=err05 effect=err05 brightness=err05
+  led 0x0e: state=err05 effect=err05 brightness=err05
+  led 0x0f: state=err05 effect=err05 brightness=err05
+  led 0x10: state=err05 effect=err05 brightness=err05
+  led 0x11: state=err05 effect=err05 brightness=err05
+  led 0x12: state=err05 effect=err05 brightness=err05
+  led 0x13: state=err05 effect=err05 brightness=err05
+  led 0x14: state=err05 effect=err05 brightness=err05
+  led 0x15: state=err05 effect=err05 brightness=err05
+  led 0x16: state=err05 effect=err05 brightness=err05
+  led 0x17: state=err05 effect=err05 brightness=err05
+  led 0x18: state=err05 effect=err05 brightness=err05
+  led 0x19: state=err05 effect=err05 brightness=err05
+  led 0x1a: state=err05 effect=err05 brightness=err05
+  led 0x1b: state=err05 effect=err05 brightness=err05
+  led 0x1c: state=err05 effect=err05 brightness=err05
+  led 0x1d: state=err05 effect=err05 brightness=err05
+  led 0x1e: state=err05 effect=err05 brightness=err05
+  led 0x1f: state=err05 effect=err05 brightness=err05
+  led 0x20: state=err05 effect=err05 brightness=err05
+  device mode: status 02 mode 00 00
+done - log saved to probe.log

@@ -1,0 +1,10 @@
+[Unit]
+Description=Set Razer Blade keyboard backlight to static green, 100%
+After=systemd-udev-settle.service multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/bin/razer_static.py 0 255 0 100
+
+[Install]
+WantedBy=multi-user.target
