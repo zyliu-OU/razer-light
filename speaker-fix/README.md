@@ -30,7 +30,7 @@ The writes live in volatile codec registers. They are lost on reboot and suspend
 sudo ./install.sh
 ```
 
-Installs the script and verb list to `/usr/local/lib/razer-speaker-fix/`, enables `razer-speaker-fix.service`, adds a systemd sleep hook that re-runs it on resume, and installs the speaker protection filter (below).
+Installs the script and verb list to `/usr/local/lib/razer-speaker-fix/`, enables `razer-speaker-fix.service`, adds a systemd sleep hook that re-runs it on resume, and installs the speaker protection filter and the volume curve (below).
 
 Uninstall:
 
@@ -54,6 +54,27 @@ systemctl --user restart wireplumber
 To install it without the rest, copy the file to `~/.config/wireplumber/wireplumber.conf.d/` and run the same command.
 
 This is not a limiter and does not replace the amplifier's own protection; it lowers the stress on the speakers. Needs PipeWire 1.4 or newer.
+
+## Volume curve
+
+The amplifier mutes any signal quieter than about −40 dBFS. With PipeWire's normal volume curve, the bottom half of the slider falls under that level: below 50% there is no sound, and everything audible is squeezed into 50–100%.
+
+`52-razer-speaker-volume.conf` gives the speakers a curve that starts just above the cut-off and rises evenly, 3 dB per 10% of the slider:
+
+| Slider | 0% | 20% | 50% | 80% | 100% |
+| --- | --- | --- | --- | --- | --- |
+| Before | silent | −42 dB | −18 dB | −6 dB | 0 dB |
+| After | −30 dB | −24 dB | −15 dB | −6 dB | 0 dB |
+
+The maximum is unchanged. How it works:
+
+- PipeWire stops using the codec's hardware volume controls for this card (`api.alsa.soft-mixer`). `razer_speaker_fix.py` sets the `Speaker` and `Headphone` controls to 0 dB at boot and after resume.
+- On the speaker output, the volume slider drives a control in a small filter graph that computes the gain (`input.volumes`), instead of being applied directly (`channelmix.lock-volumes`).
+- PipeWire starts that control at the bottom of the curve until the volume next changes, so `razer-speaker-volume-sync.lua` (a WirePlumber script) re-applies the saved volume the first time the speaker output plays.
+
+Headphones and HDMI keep the normal curve. They now use software volume, which sounds the same as before at every slider position.
+
+To change the range, edit `Mult` and `Add` in the file (the formula is in its comments), then restart WirePlumber.
 
 ## Status
 

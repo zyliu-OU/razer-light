@@ -52,7 +52,7 @@ sudo speaker-fix/install.sh                       # apply on every boot and resu
 sudo speaker-fix/install.sh --uninstall           # remove it
 ```
 
-The speakers sit behind a smart amplifier that Windows programs on every boot. The script sends the same start-up sequence to the Realtek ALC298 codec. Nothing is written to firmware; a reboot clears it. The installer also adds a speaker protection filter (bass cut below 80 Hz, 3 dB less maximum level). See [speaker-fix/README.md](speaker-fix/README.md) for details.
+The speakers sit behind a smart amplifier that Windows programs on every boot. The script sends the same start-up sequence to the Realtek ALC298 codec. Nothing is written to firmware; a reboot clears it. The installer also adds a speaker protection filter (bass cut below 80 Hz, 3 dB less maximum level) and a volume curve that spreads the audible range over the whole slider. See [speaker-fix/README.md](speaker-fix/README.md) for details.
 
 ## What each script does
 
@@ -68,12 +68,14 @@ The speakers sit behind a smart amplifier that Windows programs on every boot. T
 
 | File | What it does |
 | --- | --- |
-| `razer_speaker_fix.py` | Finds the ALC298 codec and sends it the amplifier start-up sequence. |
+| `razer_speaker_fix.py` | Finds the ALC298 codec, sends it the amplifier start-up sequence, and sets its hardware gain to 0 dB. |
 | `razer_blade16_alc298_verbs.txt` | The sequence itself: 2,000 codec coefficient writes, one per line. |
-| `install.sh` | Installs the script, verb list, boot service, resume hook, and protection filter; `--uninstall` removes them. |
+| `install.sh` | Installs the script, verb list, boot service, resume hook, protection filter, and volume curve; `--uninstall` removes them. |
 | `razer-speaker-fix.service` | systemd unit that runs the fix at boot. |
 | `sleep-hook` | Re-runs the fix after waking from suspend or hibernate. |
 | `51-razer-speaker-protect.conf` | PipeWire/WirePlumber rule that protects the speakers: cuts bass below 80 Hz and lowers the maximum level by 3 dB. |
+| `52-razer-speaker-volume.conf` | Volume curve for the speakers: the slider runs from −30 dB to 0 dB, evenly in dB, so the bottom half is no longer silent. |
+| `razer-speaker-volume-sync.lua` | WirePlumber script that applies the saved volume to that curve when the speaker output starts. |
 
 ### Lid-closed breathing light (investigation only)
 

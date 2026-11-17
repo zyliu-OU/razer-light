@@ -1,6 +1,6 @@
 [Unit]
 Description=Razer Blade 16 internal speaker amp init
-After=sound.target
+After=sound.target alsa-restore.service alsa-state.service
 
 [Service]
 Type=oneshot

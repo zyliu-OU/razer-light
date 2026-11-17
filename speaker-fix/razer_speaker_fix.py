@@ -9,6 +9,7 @@ import fcntl
 import glob
 import os
 import struct
+import subprocess
 import sys
 
 HDA_IOCTL_VERB_WRITE = 0xC0084811  # _IOWR('H', 0x11, struct hda_verb_ioctl)
@@ -22,6 +23,22 @@ def find_alc298():
                 codec = path.rsplit("#", 1)[1]
                 return f"/dev/snd/hwC{card}D{codec}"
     return None
+
+
+def set_hw_volumes(card):
+    """Put the codec's Speaker and Headphone gain at 0 dB.
+
+    With 52-razer-speaker-volume.conf installed, PipeWire no longer drives these
+    controls and does all volume in software, so they must sit at 0 dB or the
+    maximum is lower. Without that file PipeWire drives them itself and
+    overwrites this, so it is harmless either way.
+    """
+    for ctl in ("Speaker", "Headphone"):
+        try:
+            subprocess.run(["amixer", "-q", "-c", card, "sset", ctl, "0dB"],
+                           check=False, timeout=5)
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"could not set {ctl} volume: {e}", file=sys.stderr)
 
 
 def main():
@@ -47,6 +64,7 @@ def main():
     finally:
         os.close(fd)
     print(f"sent {len(verbs)} verbs to {dev}")
+    set_hw_volumes(dev[len("/dev/snd/hwC"):].split("D")[0])
 
 
 if __name__ == "__main__":
