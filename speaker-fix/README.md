@@ -8,7 +8,12 @@ Everything looks fine in software (the "Speaker" output exists, nothing is muted
 
 ## The fix
 
-`razer_speaker_fix.py` sends the amp's start-up sequence (2,000 coefficient writes, listed in `razer_blade16_alc298_verbs.txt`) to the codec's hwdep device, the same thing `hda-verb` from `alsa-tools` does, without needing that package.
+`razer_speaker_fix.py` sends the amp's start-up sequence (5,645 codec verbs, listed in `razer_blade16_alc298_verbs.txt`) to the codec's hwdep device, the same thing `hda-verb` from `alsa-tools` does, without needing that package.
+
+The sequence has two parts:
+
+1. The 2024 Windows driver trace from Litesung's project (2,000 verbs). It is cut off partway through programming the amp's DSP, right where the second channel's settings begin. With only this part, just the left speaker plays.
+2. The rest of the DSP programming, the amp wake, and pin 0x14 switched on, taken from the Linux kernel's Razer Blade 16 (2025) fixup (`sound/hda/codecs/helpers/razer_blade16_2025.c`). The 2025 model uses the same amp: 90 of the 106 distinct writes in the 2024 trace appear in the 2025 table, and the two sequences match at the point where the trace stops. With both parts, both speakers play.
 
 Try it once:
 
@@ -52,8 +57,9 @@ This is not a limiter and does not replace the amplifier's own protection; it lo
 
 ## Status
 
-Tested on one machine: Ubuntu 26.04, kernel 7.0, PipeWire 1.6. A manual run brings the speakers up. Use moderate volume the first time; if you hear distortion, reboot to clear the settings.
+Tested on one machine: Ubuntu 26.04, kernel 7.0, PipeWire 1.6. A manual run brings up both speakers. The second part of the sequence carries the 2025 model's tuning, which may not be exactly what Windows uses on the 2024 model. Use moderate volume the first time; if you hear distortion, reboot to clear the settings.
 
 ## Credits
 
-The verb sequence comes from [Litesung/razer-blade-16-audio-fix](https://github.com/Litesung/razer-blade-16-audio-fix) (MIT, see `LICENSE.verbs`), which derived it from the Windows driver.
+- The first 2,000 verbs come from [Litesung/razer-blade-16-audio-fix](https://github.com/Litesung/razer-blade-16-audio-fix) (MIT, see `LICENSE.verbs`), which captured them from the Windows driver.
+- The rest is converted from the Razer Blade 16 (2025) amp tables in the Linux kernel sound tree, `sound/hda/codecs/helpers/razer_blade16_2025.c` (GPL-2.0-or-later).
