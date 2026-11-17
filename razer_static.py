@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Set Razer Blade keyboard backlight to a static color + brightness via hidraw.
 
-Usage: sudo python3 razer_static.py [R G B] [brightness 0-100]
-Default: 0 255 0, 100%
+Usage: sudo python3 razer_static.py [R G B] [brightness 0-100] [logo brightness 0-100]
+Default: 0 255 0, 100%, logo 100% (logo 0 = off)
 Uses the Razer Chroma 90-byte feature-report protocol (same as OpenRazer).
 """
 import fcntl, glob, os, sys, time
@@ -58,6 +58,7 @@ def main():
     a = [int(x) for x in sys.argv[1:]]
     r, g, b = a[0:3] if len(a) >= 3 else (0, 255, 0)
     pct = a[3] if len(a) >= 4 else 100
+    logo = round(max(0, min(100, a[4] if len(a) >= 5 else 100)) * 255 / 100)
     for attempt in range(15):  # at boot the USB device may not be ready yet
         try:
             fd = find_device()
@@ -79,12 +80,17 @@ def main():
     global TRANSACTION_ID
     send(fd, 0x03, 0x00, [0x01, 0x04, 0x00])
     time.sleep(0.3)
+    if logo == 0:
+        send(fd, 0x03, 0x00, [0x00, 0x04, 0x00])
+        print("logo:         off")
+        os.close(fd)
+        return
     results = [
         send(fd, 0x03, 0x00, [0x01, 0x04, 0x01]),        # state on (stored)
         send(fd, 0x03, 0x02, [0x01, 0x04, 0x00]),        # effect static (stored)
         send(fd, 0x03, 0x00, [0x00, 0x04, 0x01]),        # state on (no-store)
-        send(fd, 0x03, 0x03, [0x01, 0x04, 0xFF]),        # legacy brightness
-        send(fd, 0x0F, 0x04, [0x01, 0x04, 0xFF]),        # extended brightness
+        send(fd, 0x03, 0x03, [0x01, 0x04, logo]),        # legacy brightness
+        send(fd, 0x0F, 0x04, [0x01, 0x04, logo]),        # extended brightness
         send(fd, 0x0F, 0x02, [0x01, 0x04, 0x01, 0x00, 0x00, 0x01, r, g, b]),  # extended static
     ]
     TRANSACTION_ID = 0xFF
@@ -94,6 +100,8 @@ def main():
     ]
     TRANSACTION_ID = 0x1F
     print("logo:        ", " ".join("OK" if s[0] == 0x02 else f"0x{s[0]:02x}" for s in results))
+    s = send(fd, 0x03, 0x83, [0x01, 0x04, 0x00])  # read back what the firmware kept
+    print(f"logo brightness: asked {logo}, firmware reports {s[10]}" if s[0] == 0x02 else f"logo brightness read-back: status 0x{s[0]:02x}")
     os.close(fd)
 
 if __name__ == "__main__":
