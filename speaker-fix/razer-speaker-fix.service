@@ -1,0 +1,14 @@
+[Unit]
+Description=Razer Blade 16 internal speaker amp init
+After=sound.target
+
+[Service]
+Type=oneshot
+# The codec device can take a moment to appear at boot / after resume.
+ExecStartPre=/bin/sleep 2
+ExecStart=/usr/bin/python3 -I /usr/local/lib/razer-speaker-fix/razer_speaker_fix.py
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
