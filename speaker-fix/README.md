@@ -25,13 +25,30 @@ The writes live in volatile codec registers. They are lost on reboot and suspend
 sudo ./install.sh
 ```
 
-Installs the script and verb list to `/usr/local/lib/razer-speaker-fix/`, enables `razer-speaker-fix.service`, and adds a systemd sleep hook that re-runs it on resume.
+Installs the script and verb list to `/usr/local/lib/razer-speaker-fix/`, enables `razer-speaker-fix.service`, adds a systemd sleep hook that re-runs it on resume, and installs the speaker protection filter (below).
 
 Uninstall:
 
 ```sh
 sudo ./install.sh --uninstall
 ```
+
+## Speaker protection
+
+On Windows, Razer's audio software filters and limits what reaches the speakers. On Linux the signal goes to the amplifier raw, so `51-razer-speaker-protect.conf` adds a small filter to the PipeWire speaker output:
+
+- a high-pass at 80 Hz, which removes bass the speakers cannot reproduce but that still drives the cones
+- a 3 dB cut in maximum level
+
+It applies to the internal speakers only; headphones, HDMI and Bluetooth are separate outputs. `install.sh` copies it to `/etc/wireplumber/wireplumber.conf.d/`. To activate it, or after editing the cut-off frequency or gain in the file:
+
+```sh
+systemctl --user restart wireplumber
+```
+
+To install it without the rest, copy the file to `~/.config/wireplumber/wireplumber.conf.d/` and run the same command.
+
+This is not a limiter and does not replace the amplifier's own protection; it lowers the stress on the speakers. Needs PipeWire 1.4 or newer.
 
 ## Status
 
