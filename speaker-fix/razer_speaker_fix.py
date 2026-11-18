@@ -11,6 +11,7 @@ import os
 import struct
 import subprocess
 import sys
+import time
 
 HDA_IOCTL_VERB_WRITE = 0xC0084811  # _IOWR('H', 0x11, struct hda_verb_ioctl)
 
@@ -41,6 +42,26 @@ def set_hw_volumes(card):
             print(f"could not set {ctl} volume: {e}", file=sys.stderr)
 
 
+def speaker_switch(card, state=None):
+    """Read the Speaker on/off switch, or set it to "on"/"off".
+
+    Returns the switch state ("on"/"off") read before any change, or None if
+    amixer is unavailable or the control is missing.
+    """
+    try:
+        out = subprocess.run(["amixer", "-c", card, "sget", "Speaker"],
+                             capture_output=True, text=True, timeout=5).stdout
+        before = "off" if "[off]" in out else "on" if "[on]" in out else None
+        if state and before:
+            subprocess.run(["amixer", "-q", "-c", card, "sset", "Speaker",
+                            "unmute" if state == "on" else "mute"],
+                           check=False, timeout=5)
+        return before
+    except (OSError, subprocess.SubprocessError) as e:
+        print(f"could not access Speaker switch: {e}", file=sys.stderr)
+        return None
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     verbs_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
@@ -57,14 +78,21 @@ def main():
                 nid, verb, param = (int(x, 16) for x in line.split())
                 verbs.append((nid << 24) | (verb << 8) | param)
 
+    card = dev[len("/dev/snd/hwC"):].split("D")[0]
+    # Keep the speaker pin muted while the amp powers up, so its start-up
+    # transient does not come out as a click; restore the switch afterwards.
+    was = speaker_switch(card, "off")
     fd = os.open(dev, os.O_RDWR)
     try:
         for v in verbs:
             fcntl.ioctl(fd, HDA_IOCTL_VERB_WRITE, struct.pack("II", v, 0))
     finally:
         os.close(fd)
+        if was == "on":
+            time.sleep(0.5)  # let the amp settle before unmuting
+            speaker_switch(card, "on")
     print(f"sent {len(verbs)} verbs to {dev}")
-    set_hw_volumes(dev[len("/dev/snd/hwC"):].split("D")[0])
+    set_hw_volumes(card)
 
 
 if __name__ == "__main__":
