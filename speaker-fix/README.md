@@ -59,14 +59,14 @@ This is not a limiter and does not replace the amplifier's own protection; it lo
 
 The amplifier mutes any signal quieter than about −40 dBFS. With PipeWire's normal volume curve, the bottom half of the slider falls under that level: below 50% there is no sound, and everything audible is squeezed into 50–100%.
 
-`52-razer-speaker-volume.conf` gives the speakers a curve that starts just above the cut-off and rises evenly, 3 dB per 10% of the slider:
+`52-razer-speaker-volume.conf` spreads a 20 dB range evenly over the slider, 2 dB per 10%:
 
-| Slider | 0% | 20% | 50% | 80% | 100% |
-| --- | --- | --- | --- | --- | --- |
-| Before | silent | −42 dB | −18 dB | −6 dB | 0 dB |
-| After | −30 dB | −24 dB | −15 dB | −6 dB | 0 dB |
+| Slider | 0% | 20% | 40% | 50% | 60% | 80% | 100% |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| PipeWire default | silent | −42 dB | −24 dB | −18 dB | −13 dB | −5.8 dB | 0 dB |
+| This file | −20 dB | −16 dB | −12 dB | −10 dB | −8 dB | −4 dB | 0 dB |
 
-The maximum is unchanged. How it works:
+The maximum is unchanged. 0% is not silent; use mute for silence. How it works:
 
 - PipeWire stops using the codec's hardware volume controls for this card (`api.alsa.soft-mixer`). `razer_speaker_fix.py` sets the `Speaker` and `Headphone` controls to 0 dB at boot and after resume.
 - On the speaker output, the volume slider drives a control in a small filter graph that computes the gain (`input.volumes`), instead of being applied directly (`channelmix.lock-volumes`).
@@ -74,7 +74,9 @@ The maximum is unchanged. How it works:
 
 Headphones and HDMI keep the normal curve. They now use software volume, which sounds the same as before at every slider position.
 
-To change the range, edit `Mult` and `Add` in the file (the formula is in its comments), then restart WirePlumber.
+To change the range, edit `Mult` and `Add` in the `db` node (the formula is in the file's comments), then restart WirePlumber.
+
+If the speakers are much quieter than this table suggests, check `amixer -c 1 sget Speaker`. It must read 0 dB. A lower level saved earlier in `/var/lib/alsa/asound.state` is restored at boot. Re-run `sudo ./install.sh` so the installed script resets it, and run `sudo alsactl store` to save the 0 dB level.
 
 ## Status
 
