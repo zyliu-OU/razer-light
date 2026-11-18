@@ -66,8 +66,13 @@ def main():
     here = os.path.dirname(os.path.abspath(__file__))
     verbs_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(
         here, "razer_blade16_alc298_verbs.txt")
-    dev = find_alc298()
-    if not dev:
+    # At boot the codec can take a moment to appear; wait up to 10 s for it.
+    for _ in range(100):
+        dev = find_alc298()
+        if dev and os.path.exists(dev):
+            break
+        time.sleep(0.1)
+    else:
         sys.exit("ALC298 codec not found")
 
     verbs = []
