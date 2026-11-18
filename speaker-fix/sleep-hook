@@ -1,0 +1,4 @@
+#!/bin/sh
+# Re-run the speaker amp init after waking from suspend/hibernate.
+[ "$1" = "post" ] && systemctl restart --no-block razer-speaker-fix.service
+exit 0
