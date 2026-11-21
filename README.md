@@ -75,6 +75,7 @@ The speakers sit behind a smart amplifier that Windows programs on every boot. T
 | `sleep-hook` | Re-runs the fix after waking from suspend or hibernate. |
 | `51-razer-speaker-protect.conf` | PipeWire/WirePlumber rule that protects the speakers: cuts bass below 80 Hz and lowers the maximum level by 3 dB. |
 | `52-razer-speaker-volume.conf` | Volume curve for the speakers: 0% (and mute) is silent, 1–20% is −30 dB to −20 dB, 20–100% is −20 dB to 0 dB. |
+| `61-razer-speaker-power.rules` | udev rule that keeps the codec powered on, so it doesn't lose the amp settings when the speakers are idle. |
 | `razer-speaker-volume-sync.lua` | WirePlumber script that applies the saved volume to that curve when the speaker output starts. |
 
 ### Lid-closed breathing light (investigation only)

@@ -10,10 +10,15 @@ HOOK=/usr/lib/systemd/system-sleep/razer-speaker-fix
 PROTECT=/etc/wireplumber/wireplumber.conf.d/51-razer-speaker-protect.conf
 VOLUME=/etc/wireplumber/wireplumber.conf.d/52-razer-speaker-volume.conf
 VOLSCRIPT=/usr/local/share/wireplumber/scripts/razer-speaker-volume-sync.lua
+POWER=/etc/udev/rules.d/61-razer-speaker-power.rules
 
 if [ "$1" = "--uninstall" ]; then
     systemctl disable --now razer-speaker-fix.service 2>/dev/null || true
-    rm -rf "$LIB" "$UNIT" "$HOOK" "$PROTECT" "$VOLUME" "$VOLSCRIPT"
+    rm -rf "$LIB" "$UNIT" "$HOOK" "$PROTECT" "$VOLUME" "$VOLSCRIPT" "$POWER"
+    udevadm control --reload
+    for d in /sys/bus/hdaudio/devices/*; do
+        [ "$(cat "$d/vendor_id" 2>/dev/null)" = 0x10ec0298 ] && echo auto > "$d/power/control"
+    done
     systemctl daemon-reload
     echo "uninstalled; run 'systemctl --user restart wireplumber' (no sudo) or log out to drop the speaker filter and volume curve"
     exit 0
@@ -27,6 +32,9 @@ install -m 755 "$SRC/sleep-hook" "$HOOK"
 install -D -m 644 "$SRC/51-razer-speaker-protect.conf" "$PROTECT"
 install -D -m 644 "$SRC/52-razer-speaker-volume.conf" "$VOLUME"
 install -D -m 644 "$SRC/razer-speaker-volume-sync.lua" "$VOLSCRIPT"
+install -m 644 "$SRC/61-razer-speaker-power.rules" "$POWER"
+udevadm control --reload
+udevadm trigger --action=add --subsystem-match=hdaudio
 systemctl daemon-reload
 systemctl enable razer-speaker-fix.service
 systemctl restart razer-speaker-fix.service

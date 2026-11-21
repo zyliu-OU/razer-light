@@ -1,0 +1,8 @@
+# Keep the Razer Blade 16 speaker codec (Realtek ALC298, subsystem 1a58:300a)
+# powered on. By default it powers down after 1 s of silence, for example
+# while another output such as a USB speaker is in use. The amp settings that
+# razer_speaker_fix.py writes are not restored when it wakes, and the right
+# speaker goes silent until the fix is run again.
+# Keeping the codec on also keeps the audio controller awake: a small cost in
+# battery life.
+ACTION=="add|bind", SUBSYSTEM=="hdaudio", ATTR{vendor_id}=="0x10ec0298", ATTR{subsystem_id}=="0x1a58300a", ATTR{power/control}="on"

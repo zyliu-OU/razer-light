@@ -1,13 +1,12 @@
 [Unit]
 Description=Razer Blade 16 internal speaker amp init
 After=sound.target alsa-restore.service alsa-state.service
-# The amp makes a small pop when it powers up, which no codec mute can stop.
-# Finish before the login screen starts so the pop falls in the boot splash.
-Before=display-manager.service
 
 [Service]
 Type=oneshot
-# The script itself waits (up to 10 s) for the codec device to appear.
+# Give the codec a moment to finish starting up at boot. The script also
+# waits (up to 10 s) for the codec device to appear.
+ExecStartPre=/bin/sleep 2
 ExecStart=/usr/bin/python3 -I /usr/local/lib/razer-speaker-fix/razer_speaker_fix.py
 Restart=on-failure
 RestartSec=3

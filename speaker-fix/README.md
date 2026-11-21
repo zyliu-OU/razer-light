@@ -32,7 +32,9 @@ sudo ./install.sh
 
 Installs the script and verb list to `/usr/local/lib/razer-speaker-fix/`, enables `razer-speaker-fix.service`, adds a systemd sleep hook that re-runs it on resume, and installs the speaker protection filter and the volume curve (below).
 
-The amp makes a small pop when it powers up. Muting the codec doesn't stop it, because the pop comes from the amp itself. The service therefore runs before the login screen starts (`Before=display-manager.service`), so the pop happens during the boot splash. After resume it happens while the screen is still locked.
+It also installs a udev rule, `61-razer-speaker-power.rules`, that keeps the codec powered on. By default the codec powers down after 1 s of silence, for example while a USB speaker or headphones are in use. The amp settings are not restored when it wakes, and the right speaker goes silent until the fix is run again. Keeping the codec on costs a little battery life.
+
+The amp makes a small pop when it powers up. Muting the codec doesn't stop it, because the pop comes from the amp itself. It happens once, a couple of seconds into boot and right after resume.
 
 Uninstall:
 
